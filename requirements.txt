@@ -1,0 +1,6 @@
+keyring
+numpy
+requests
+Pillow
+slack-bolt
+transformers
