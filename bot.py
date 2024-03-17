@@ -7,6 +7,7 @@ import time
 import keyring
 from datetime import datetime
 from io import BytesIO
+import numpy as np
 
 import requests
 from PIL import Image
@@ -127,7 +128,8 @@ def process_webcam():
     while True:
         frame = capture_frame(STREAM_URL)
         if frame:
-            results = pipe(frame)
+            cropped = Image.fromarray(np.array(frame)[147: 433])
+            results = pipe(cropped)
             current_time = datetime.now()
             print(current_time.strftime('%H:%M:%S'))
             pprint.pprint(results)
