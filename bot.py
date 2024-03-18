@@ -21,7 +21,7 @@ STREAM_URL = "http://foodcam.media.mit.edu/axis-cgi/mjpg/video.cgi?1710353936070
 os.environ["SLACK_APP_TOKEN"] = keyring.get_password("slack", "slack_app_token")
 os.environ["SLACK_BOT_TOKEN"] = keyring.get_password("slack", "slack_bot_token")
 
-logging.basicConfig( level=logging.INFO) # todo filename='logs.txt',
+logging.basicConfig(filename='logs.txt', level=logging.INFO)
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 userbase = {}
 
