@@ -16,7 +16,23 @@ for class_name in classes.keys():
     options.append(option)
 print()
 
-def create_message(text):
+def create_message(text, selected_options=None, threshold=None):
+    if not threshold:
+        threshold = '0.15'
+    else:
+        threshold = str(threshold)
+    if selected_options:
+        initial_options = []
+        for option in selected_options:
+            initial_option = {
+                "text": {
+                    "type": "plain_text",
+                    "text": option,
+                    "emoji": True
+                },
+                "value": option
+            }
+            initial_options.append(initial_option)
     message = {
         "text": "This is the FoodcamAlert Options Page",
         "blocks": [
@@ -43,6 +59,7 @@ def create_message(text):
                         "emoji": True
                     },
                     "options": options,
+                    "initial_options": initial_options,
                     "action_id": "multi_static_select-action"
                 },
                 "label": {
@@ -56,7 +73,8 @@ def create_message(text):
                 "type": "input",
                 "element": {
                     "type": "plain_text_input",
-                    "action_id": "plain_text_input-action"
+                    "action_id": "plain_text_input-action",
+                    "initial_value": threshold,
                 },
                 "label": {
                     "type": "plain_text",
