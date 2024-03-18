@@ -1,4 +1,5 @@
 keyring
+keyrings.alt
 numpy
 requests
 Pillow

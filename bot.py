@@ -32,7 +32,7 @@ def generate_message(user_id):
         threshold = userbase[user_id]['threshold']
         text = f"Hi <@{user_id}>! Your current settings are: \n" + f'Food Options: {selected_options}\n' + f'Detection Confidence Threshold: {threshold}. You can change them below.'
     else:
-        text = f"Hi <@{user_id}>! This is the FoodcamAlert bot. You can choose your favourite foods in the box below and I'll send you a message whenever I detect them on the foodcam. I contiuously monitor the cam, so that you can secure your snack even bevore the button is pressed. Please also let me know the detection confidence threshold above which you would like to be notified (range: [0.1, 1]). I recommend to start with 0.1 and raise it if you get too many false alerts."
+        text = f"Hi <@{user_id}>! This is the FoodcamAlert bot. You can choose your favourite foods in the box below and I'll send you a message whenever I detect them on the foodcam. I contiuously monitor the cam, so that you can secure your snack even bevore the button is pressed. Please also let me know the detection confidence threshold above which you would like to be notified (range: [0.1, 1]). I recommend to start with 0.15 and raise it if you get too many false alerts."
     return create_message(text)
 
 
@@ -137,7 +137,7 @@ def process_webcam():
             save = False
             found_something = False
             for result in results:
-                if result['score'] >= 0.8:
+                if result['score'] >= 0.08:
                     found_something = True
                 for user_id in userbase.keys():
                     if result['label'] in userbase[user_id]['selected_options'] and result['score'] >= userbase[user_id]['threshold']:
