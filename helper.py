@@ -21,6 +21,7 @@ def create_message(text, selected_options=None, threshold=None):
         threshold = '0.15'
     else:
         threshold = str(threshold)
+
     if selected_options:
         initial_options = []
         for option in selected_options:
@@ -33,6 +34,8 @@ def create_message(text, selected_options=None, threshold=None):
                 "value": option
             }
             initial_options.append(initial_option)
+
+
     message = {
         "text": "This is the FoodcamAlert Options Page",
         "blocks": [
@@ -59,7 +62,6 @@ def create_message(text, selected_options=None, threshold=None):
                         "emoji": True
                     },
                     "options": options,
-                    "initial_options": initial_options,
                     "action_id": "multi_static_select-action"
                 },
                 "label": {
@@ -101,4 +103,7 @@ def create_message(text, selected_options=None, threshold=None):
             }
         ]
     }
+    if selected_options:
+        message['blocks'][3]['element']['initial_options'] = initial_options
+
     return message
