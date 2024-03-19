@@ -128,7 +128,11 @@ def send_message(user_id, client, label, confidence, image):
 def process_webcam():
     pipe = pipeline("image-classification", model="nateraw/food")
     while True:
-        frame = capture_frame(STREAM_URL)
+        try:
+            frame = capture_frame(STREAM_URL)
+        except Exception as e:
+            logging.error(f"Error capturing frame: {e}")
+            frame = None
         if frame:
             cropped = Image.fromarray(np.array(frame)[147: 433])
             results = pipe(cropped)
