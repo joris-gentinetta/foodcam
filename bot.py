@@ -25,8 +25,16 @@ logging.basicConfig(filename='logs.txt', level=logging.INFO)
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 userbase = {}
 
+reporting_threshold = 0.15
+reset_threshold = 0.08
+reported = False
+
+
+
+
 
 def generate_message(user_id):
+    global userbase
     if user_id in userbase.keys():
         selected_options = userbase[user_id]['selected_options']
         threshold = userbase[user_id]['threshold']
@@ -40,12 +48,12 @@ def generate_message(user_id):
 
 @app.message()
 def message_hello(message, say):
-    # say(f"Hey there <@{message['user']}>!")
     say(generate_message(message['user']))
 
 
 @app.action("button-action")
 def save_button(ack, body, logger, say):
+    global userbase
     print('save_button')
     selected_options = 'nope'
     threshold = 'nope'
@@ -115,17 +123,40 @@ def capture_frame(stream_url):
     return None
 
 
-def send_message(user_id, client, label, confidence, image):
-    channel = app.client.conversations_open(users=user_id)["channel"]["id"]
+def send_message_to_user(user_id, client, label, confidence, image):
+    channel_id = app.client.conversations_open(users=user_id)["channel"]["id"]
+
     client.files_upload(
-        channels=channel,
+        channels=channel_id,
         initial_comment=f"There's {label}! Confidence: {confidence}",
+        filename="foodcam",
+        content=image,
+        username="FoodCamAlert")
+
+def send_message_to_channel(client, confidence, image):
+    # channel_name = 'fastfoodcam'
+    # channel_id = None
+    # for result in client.conversations_list(types="public_channel, private_channel"):
+    #     for channel in result["channels"]:
+    #         if channel["name"] == channel_name:
+    #             channel_id = channel["id"]
+    #             break
+    channel_id = 'C06TUQKHVLY'
+
+    client.files_upload(
+        channels=channel_id,
+        initial_comment=f"There's Food! Confidence: {confidence}",
         filename="foodcam",
         content=image,
         username="FoodCamAlert")
 
 
 def process_webcam():
+    global channel_name
+    global userbase
+    global reported
+    global reset_threshold
+
     pipe = pipeline("image-classification", model="nateraw/food")
     while True:
         try:
@@ -141,16 +172,32 @@ def process_webcam():
             pprint.pprint(results)
             print()
             save = False
-            found_something = False
+            max_score = 0
+            label = 'no_food'
             for result in results:
-                if result['score'] >= 0.08:
-                    found_something = True
-                for user_id in userbase.keys():
-                    if result['label'] in userbase[user_id]['selected_options'] and result['score'] >= userbase[user_id]['threshold']:
-                        if userbase[user_id]['reported'] == False:
-                            save = True
-                            userbase[user_id]['reported'] = True
-                            send_message(user_id, app.client, result['label'], result['score'], image_to_bytes(frame))
+                if result['score'] >= max_score:
+                    max_score = result['score']
+                    label = result['label']
+
+            if max_score >= reporting_threshold and not reported:
+                reported = True
+                try:
+                    send_message_to_channel(app.client, max_score, image_to_bytes(frame))
+                except Exception as e:
+                    logging.error(f"Error sending message to channel: {e}")
+
+
+
+            for user_id in userbase.keys():
+                if label in userbase[user_id]['selected_options'] and max_score >= userbase[user_id]['threshold']:
+                    if userbase[user_id]['reported'] == False:
+                        save = True
+                        userbase[user_id]['reported'] = True
+                        try:
+                            send_message_to_user(user_id, app.client, label, max_score, image_to_bytes(frame))
+                        except Exception as e:
+                            logging.error(f"Error sending message to user: {e}")
+
             if save:
                 try:
                     dirname = f"data/{current_time.strftime('%Y%m%d')}/{current_time.strftime('%H%M%S')}"
@@ -160,7 +207,8 @@ def process_webcam():
                         f.write(str(results))
                 except Exception as e:
                     logging.error(f"Error saving frame: {e}")
-            if not found_something:
+            if max_score <= reset_threshold:
+                reported = False
                 for user_id in userbase.keys():
                     userbase[user_id]['reported'] = False
 
