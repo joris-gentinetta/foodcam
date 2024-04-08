@@ -4,6 +4,8 @@ import os
 import pprint
 import threading
 import time
+
+import beepy
 import keyring
 from datetime import datetime
 from io import BytesIO
@@ -181,6 +183,7 @@ def process_webcam():
 
             if max_score >= reporting_threshold and not reported:
                 reported = True
+                beepy.beep(4)
                 try:
                     send_message_to_channel(app.client, max_score, image_to_bytes(frame))
                 except Exception as e:
